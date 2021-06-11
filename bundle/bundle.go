@@ -223,18 +223,21 @@ func ValuesOrDefaults(vals map[string]interface{}, b *Bundle, action string) (ma
 			uncoerced = s.Default
 		}
 
-		// Validate the selection
-		valErrs, err := s.Validate(uncoerced)
-		if err != nil {
-			return res, pkgErrors.Wrapf(err, "encountered an error validating parameter %s", name)
+		// Only collect defaults and specified parameters. Unspecified optional parameters without defaults should not be included
+		if param.Required || uncoerced != nil {
+			// Validate the selection
+			valErrs, err := s.Validate(uncoerced)
+			if err != nil {
+				return res, pkgErrors.Wrapf(err, "encountered an error validating parameter %s", name)
+			}
+			// This interface returns a single error. Validation can have multiple errors. For now return the first
+			// We should update this later.
+			if len(valErrs) > 0 {
+				valErr := valErrs[0]
+				return res, fmt.Errorf("cannot use value: %v as parameter %s: %s", uncoerced, name, valErr.Error)
+			}
+			res[name] = s.CoerceValue(uncoerced)
 		}
-		// This interface returns a single error. Validation can have multiple errors. For now return the first
-		// We should update this later.
-		if len(valErrs) > 0 {
-			valErr := valErrs[0]
-			return res, fmt.Errorf("cannot use value: %v as parameter %s: %s", uncoerced, name, valErr.Error)
-		}
-		res[name] = s.CoerceValue(uncoerced)
 	}
 	return res, nil
 }

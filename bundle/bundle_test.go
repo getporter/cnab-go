@@ -128,6 +128,11 @@ func TestValuesOrDefaults(t *testing.T) {
 				Type:    "boolean",
 				Default: false,
 			},
+			"msg": {
+				Type: "string",
+				// msg has no default, but it is optional
+				// Make sure that we are not validating optional unspecified parameters
+			},
 		},
 		Parameters: map[string]Parameter{
 			"port": {
@@ -142,6 +147,9 @@ func TestValuesOrDefaults(t *testing.T) {
 			"replicaCount": {
 				Definition: "replicaCountType",
 			},
+			"msg": {
+				Definition: "msg",
+			},
 		},
 	}
 
@@ -152,6 +160,7 @@ func TestValuesOrDefaults(t *testing.T) {
 	is.Equal(vod["host"].(string), "localhost")
 	is.Equal(vod["port"].(int), 8080)
 	is.Equal(vod["replicaCount"].(int), 3)
+	is.NotContains(vod, "msg", "msg should not be passed to the invocation image because it has no default and is optional")
 
 	// This should err out because of type problem
 	vals["replicaCount"] = "banana"
